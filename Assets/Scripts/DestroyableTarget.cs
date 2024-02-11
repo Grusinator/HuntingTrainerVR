@@ -6,7 +6,7 @@ public class DestroyableTarget : MonoBehaviour
     [SerializeField] private GameObject destroyedPrefab;
 
 
-    private KeepTrackOfTargetsHit targetStatistics;
+    public KeepTrackOfTargetsHit targetStatistics;
 
     void Start()
     {

@@ -1,7 +1,7 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Unity.Mathematics;
 using UnityEngine;
 
 public class Duck : MonoBehaviour
@@ -12,73 +12,114 @@ public class Duck : MonoBehaviour
     private float maxSpeed = 15f;
     private float glideRatio = 10f;
 
-    private float maxTurningRateDegrees = 10f;
-
     private float maxForce = 10f;
 
-    private string animIsFlying = "isFlying";
-    private string animHasDiedInAir = "hasDiedInAir";
-    private string animIsLanding = "isLanding";
+    private enum DuckState
+    {
+        Flying,
+        Dead,
+        Swimming,
+        Walking
+    }
+
+    private DuckState duckState = DuckState.Flying;
+
+    private string animFlyFromWater = "FlyFromWater";
+    private string animHasDiedInAir = "DieFlying";
+    private string animLandOnWater = "LandOnWater";
+    private string animFlapSpeed = "FlapSpeed";
+    private string animFlyFromGround = "FlyFromGround";
+    private string animDieOnGround = "DieOnGround";
+    private string animLandOnGround = "LandOnGround";
+    private string animDieOnWater = "DieOnWater";
 
     // Start is called before the first frame update
     void Start()
     {
-        animator = GetComponentInChildren<Animator>();
+        SetFlapSpeed(3f);
+        FlyToWaypoint(new Vector3(0, 0, 0));
+    }
+
+    // public new void DestroyTarget()
+    // {
+    //     if (DuckState.Dead == duckState) { return; }
+    //     if (DuckState.Flying == duckState)
+    //     {
+    //         HasDiedInAirAnim();
+    //     }
+    //     else if (DuckState.Walking == duckState)
+    //     {
+    //         DieOnGroundAnim();
+    //     }
+    //     else if (DuckState.Swimming == duckState)
+    //     {
+    //         DieOnWaterAnim();
+    //     }
+    
+    //     WaitForAnimationToFinish().Wait();
+    //     targetStatistics.TargetHit();
+    //     duckState = DuckState.Dead;
+    //     Destroy(gameObject);
+    // }
+
+    private async Task WaitForAnimationToFinish()
+    {
+        Animator animator = GetComponentInChildren<Animator>();
+        float animationLength = animator.GetCurrentAnimatorStateInfo(0).length;
+
+        await Task.Delay(TimeSpan.FromSeconds(animationLength));
+    }
+
+    public void SetFlapSpeed(float speed)
+    {
+        GetComponentInChildren<Animator>().SetFloat(animFlapSpeed, speed);
+    }
+
+    void FlyFromWaterAnim()
+    {
+        GetComponentInChildren<Animator>().SetTrigger(animFlyFromWater);
+    }
+
+    void FLyFromGroundAnim()
+    {
+        GetComponentInChildren<Animator>().SetTrigger(animFlyFromGround);
+    }
+
+    void LandOnWaterAnim()
+    {
+        GetComponentInChildren<Animator>().SetTrigger(animLandOnWater);
+    }
+
+    void HasDiedInAirAnim()
+    {
+        GetComponentInChildren<Animator>().SetTrigger(animHasDiedInAir);
+    }
+
+    void DieOnGroundAnim()
+    {
+        GetComponentInChildren<Animator>().SetTrigger(animDieOnGround);
+    }
+
+    void LandOnGroundAnim()
+    {
+        GetComponentInChildren<Animator>().SetTrigger(animLandOnGround);
+    }
+
+    void DieOnWaterAnim()
+    {
+        GetComponentInChildren<Animator>().SetTrigger(animDieOnWater);
+    }
+
+    void FlyFromGroundAnim()
+    {
+        GetComponentInChildren<Animator>().SetTrigger(animFlyFromGround);
+    }
+
+    void SetVelocity(Vector3 velocity)
+    {
         rigidBody = GetComponent<Rigidbody>();
-        // SetStartAnimation();
-        // StartCoroutine(AnimateDuck());
-    }
-
-   
-
-    public void LandOnWater(Vector3 targetPosition)
-    {
-        FlyTowards(targetPosition);
-
-        // Wait until within landing distance
-        while (Vector3.Distance(transform.position, targetPosition) > 20f)
-        {
-            // Do nothing
-        }
-
-        isLandingAnim();
-        while (Vector3.Distance(transform.position, targetPosition) < 1f)
-        {
-            // Do nothing
-        }
-        rigidBody.velocity = Vector3.zero;
-    }
-  
-    void SetStartAnimation()
-    {
-        // Check if the distance to the ground is larger than 0.1
-        if (Physics.Raycast(transform.position, -transform.up, out RaycastHit hit, 10f))
-        {
-            if (hit.distance > 0.1f)
-            {
-                // Set the flying animation
-                animator.SetBool(animIsFlying, true);
-
-                // Add forward speed
-                rigidBody.AddForce(transform.forward * maxSpeed, ForceMode.Acceleration);
-            }
-        }
-    }
-
-    void TakeOff()
-    {
-        animator.SetBool(animIsFlying, true);
-    }
-
-    void isFlyingAnim()
-    {
-        animator.SetBool(animIsFlying, true);
-    }
-
-    void isLandingAnim()
-    {
-        animator.SetBool(animIsFlying, false);
-        animator.SetBool(animIsLanding, true);
+        Debug.Log("Setting velocity to " + velocity + " for " + rigidBody);
+        rigidBody.velocity = velocity;
     }
 
     void Glide()
@@ -99,15 +140,92 @@ public class Duck : MonoBehaviour
         GetComponent<Rigidbody>().AddForce(turningForce, ForceMode.Acceleration);
     }
 
-    void FlyTowards(Vector3 targetPosition)
+    void TakeOff()
     {
-        Vector3 velocity = (targetPosition - transform.position).normalized * maxSpeed;
-        GetComponent<Rigidbody>().velocity = velocity;
-        isFlyingAnim();
+        if (DuckState.Flying == duckState || DuckState.Dead == duckState) { return; }
+        if (DuckState.Swimming == duckState)
+        {
+            FlyFromWaterAnim();
+        }
+        else if (DuckState.Walking == duckState)
+        {
+            FlyFromGroundAnim();
+        }
+
+        // Calculate the takeoff force with a forward angle
+        Vector3 takeoffForce = (transform.forward + Vector3.up) * maxForce;
+        // Apply the takeoff force to the duck
+        GetComponent<Rigidbody>().AddForce(takeoffForce, ForceMode.Acceleration);
+        duckState = DuckState.Flying;
+    }
+
+    public void PlannedFlyToAndLand(Vector3 targetPosition, Quaternion targetDirection)
+    {
+        ShouldBeFlying();
+        Transform plan = PlanLandingSequence(targetPosition, targetDirection);
+        FlyToWaypoint(plan.position);
+        LandAtTarget(targetPosition);
     }
 
 
+    private Transform PlanLandingSequence(Vector3 targetPosition, Quaternion targetDirection)
+    {
+        float landingDistance = 15f;
+        float landingHeight = 10f;
 
+        Vector3 landingVector = new(0, landingHeight, landingDistance);
+        Vector3 rotatedLandingVector = targetDirection * landingVector;
+        Debug.Log("Rotated landing vector: " + rotatedLandingVector);
+        Vector3 landingStartPoint = targetPosition + rotatedLandingVector;
+
+        GameObject tempGameObject = new("LandingPoint");
+        tempGameObject.transform.SetPositionAndRotation(landingStartPoint, targetDirection);
+        return tempGameObject.transform;
+    }
+        
+    void FlyToWaypoint(Vector3 targetPosition)
+    {
+        Debug.Log("Flying to waypoint");
+        ShouldBeFlying();
+        Vector3 velocity = (targetPosition - transform.position).normalized * maxSpeed;
+        Debug.Log("Setting velocity to " + velocity);
+        rigidBody = GetComponent<Rigidbody>();
+        rigidBody.velocity = velocity;
+        transform.LookAt(targetPosition);
+        while (Vector3.Distance(transform.position, targetPosition) < 1f)
+        {
+            // Do nothing
+        }
+    }
+
+    void LandAtTarget(Vector3 targetPosition)
+    {
+        Debug.Log("Initiating landing sequence");
+        ShouldBeFlying();
+        LandOnWaterAnim();
+        FlyToWaypoint(targetPosition);
+        SetVelocity(Vector3.zero);
+        duckState = DuckState.Swimming;
+        // GetComponent<Rigidbody>().useGravity = true;
+        Debug.Log("now Swimming");
+        OrientHorizontal();
+    }
+
+    private void OrientHorizontal()
+    {
+        Vector3 currentRotation = transform.rotation.eulerAngles;
+        currentRotation.x = 0f;
+        currentRotation.z = 0f;
+        transform.rotation = Quaternion.Euler(currentRotation);
+    }
+
+    private void ShouldBeFlying()
+    {
+        if (DuckState.Flying != duckState)
+        {
+            throw new System.Exception("Duck is not flying");
+        }
+    }
 
     void TurnRight()
     {
@@ -118,43 +236,24 @@ public class Duck : MonoBehaviour
         GetComponent<Rigidbody>().AddForce(turningForce, ForceMode.Acceleration);
     }
 
-
-
-    void DieInAir()
-    {
-        animator.SetBool(animIsFlying, false);
-        animator.SetBool(animHasDiedInAir, true);
-    }
-
     IEnumerator AnimateDuck()
     {
         // Start with flying animation
-        animator.SetBool(animIsFlying, true);
+        FlyFromWaterAnim();
         yield return new WaitForSeconds(5f); // Time for flying animation to complete
 
         // Transition to landing animation
-        animator.SetBool(animIsFlying, false);
-        animator.SetBool(animIsLanding, true);
+        LandOnWaterAnim();
         yield return new WaitForSeconds(5f); // Time for landing animation to complete
 
         // Transition to flying animation again
-        animator.SetBool(animIsLanding, false);
-        animator.SetBool(animIsFlying, true);
+        FlyFromWaterAnim();
         yield return new WaitForSeconds(5f); // Time for flying animation to complete
 
         // Transition to has died in air animation
-        animator.SetBool(animIsFlying, false);
-        animator.SetBool(animHasDiedInAir, true);
+        HasDiedInAirAnim();
         yield return new WaitForSeconds(5f); // Time for has died in air animation to complete
 
         Destroy(gameObject);
-
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        // Your update logic here
-        
     }
 }

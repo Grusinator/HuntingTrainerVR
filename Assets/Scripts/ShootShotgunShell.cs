@@ -44,7 +44,7 @@ public class ShootShotgunShell : MonoBehaviour
 
     void Start()
     {
-        targetStatistics = GameObject.FindObjectOfType<KeepTrackOfTargetsHit>();
+        targetStatistics = GameObject.FindObjectOfType<KeepTrackOfTargetsHit>(includeInactive: true);
     }
 
     public void Fire()

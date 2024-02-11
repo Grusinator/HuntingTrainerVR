@@ -21,8 +21,9 @@ public class DuckController : MonoBehaviour
             yield return new WaitForSeconds(Random.Range(1f, 5f));
             Debug.Log("Spawning duck");
             GameObject duck = Instantiate(duckPrefab, spawnPosition.transform.position, Quaternion.identity);
+            yield return new WaitForSeconds(2f);
             Duck duckMovement = duck.GetComponent<Duck>();
-            duckMovement.LandOnWater(waterTransform.position);
+            duckMovement.PlannedFlyToAndLand(waterTransform.position, waterTransform.rotation);
         }
     }
 }
