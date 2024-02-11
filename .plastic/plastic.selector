@@ -1,0 +1,4 @@
+repository "HuntingTrainer@grusinator@cloud"
+  path "/"
+    br "/main"
+    co "/main"
