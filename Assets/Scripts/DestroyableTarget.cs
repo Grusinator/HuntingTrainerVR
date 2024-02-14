@@ -1,22 +1,18 @@
 
 using UnityEngine;
 
-public class DestroyableTarget : MonoBehaviour
+public class DestroyableTarget : DestroyableObject
 {
     [SerializeField] private GameObject destroyedPrefab;
 
-
-    public KeepTrackOfTargetsHit targetStatistics;
-
-    void Start()
-    {
-        targetStatistics = GameObject.FindObjectOfType<KeepTrackOfTargetsHit>();
-    }
-    public void DestroyTarget()
+    public void DestroyObject()
     {
         Instantiate(destroyedPrefab, transform.position, transform.rotation);
-        Debug.Log("Destroying " + gameObject.name + " position: " + transform.position + " rotation: " + transform.rotation + " destroyedPrefab: " + destroyedPrefab.name);
-        targetStatistics.TargetHit();
         Destroy(gameObject);
     }
 }
+
+
+
+
+

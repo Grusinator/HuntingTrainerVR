@@ -3,11 +3,14 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.AI;
 
-public class Duck : MonoBehaviour
+public class Duck : DestroyableObject
 {
     private Animator animator;
     private Rigidbody rigidBody;
+
+    public NavMeshAgent navAgent;
 
     private float maxSpeed = 15f;
     private float glideRatio = 10f;
@@ -37,30 +40,40 @@ public class Duck : MonoBehaviour
     void Start()
     {
         SetFlapSpeed(3f);
-        FlyToWaypoint(new Vector3(0, 0, 0));
+        //FlyToWaypoint(new Vector3(0, 0, 0));
+        navAgent = GetComponent<NavMeshAgent>();
+        Debug.Log("Nav agent: " + navAgent);
+        NavMeshHit closestHit;
+        if (NavMesh.SamplePosition(navAgent.transform.position, out closestHit, 500, NavMesh.AllAreas))
+        {
+            navAgent.transform.position = closestHit.position;
+            navAgent.enabled = true;
+        }
+        else
+        {
+            Debug.LogError("Could not find position on NavMesh!");
+        } 
     }
 
-    // public new void DestroyTarget()
-    // {
-    //     if (DuckState.Dead == duckState) { return; }
-    //     if (DuckState.Flying == duckState)
-    //     {
-    //         HasDiedInAirAnim();
-    //     }
-    //     else if (DuckState.Walking == duckState)
-    //     {
-    //         DieOnGroundAnim();
-    //     }
-    //     else if (DuckState.Swimming == duckState)
-    //     {
-    //         DieOnWaterAnim();
-    //     }
+    public void DestroyObject(){
+        if (DuckState.Dead == duckState) { return; }
+        if (DuckState.Flying == duckState)
+        {
+            HasDiedInAirAnim();
+        }
+        else if (DuckState.Walking == duckState)
+        {
+            DieOnGroundAnim();
+        }
+        else if (DuckState.Swimming == duckState)
+        {
+            DieOnWaterAnim();
+        }
     
-    //     WaitForAnimationToFinish().Wait();
-    //     targetStatistics.TargetHit();
-    //     duckState = DuckState.Dead;
-    //     Destroy(gameObject);
-    // }
+        WaitForAnimationToFinish().Wait();
+        duckState = DuckState.Dead;
+        Destroy(gameObject);
+    }
 
     private async Task WaitForAnimationToFinish()
     {

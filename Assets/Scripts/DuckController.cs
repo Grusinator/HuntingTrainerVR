@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Threading.Tasks;
 using UnityEngine;
 
 public class DuckController : MonoBehaviour
@@ -20,10 +21,12 @@ public class DuckController : MonoBehaviour
         {
             yield return new WaitForSeconds(Random.Range(1f, 5f));
             Debug.Log("Spawning duck");
-            GameObject duck = Instantiate(duckPrefab, spawnPosition.transform.position, Quaternion.identity);
+            Vector3 randomPosition = new Vector3(Random.Range(-spawnRadius, spawnRadius), 0f, Random.Range(-spawnRadius, spawnRadius));
+            GameObject duck = Instantiate(duckPrefab, spawnPosition.transform.position + randomPosition, Quaternion.identity);
             yield return new WaitForSeconds(2f);
             Duck duckMovement = duck.GetComponent<Duck>();
-            duckMovement.PlannedFlyToAndLand(waterTransform.position, waterTransform.rotation);
+            Task.Delay(System.TimeSpan.FromSeconds(2));
+            duckMovement.navAgent.SetDestination(waterTransform.position);
         }
     }
 }

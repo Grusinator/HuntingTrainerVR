@@ -22,13 +22,19 @@ public class DestroyTargetOnCollision : MonoBehaviour
         if (collision.gameObject.TryGetComponent<DestroyableTarget>(out var destroyableTarget))
         {
             Debug.Log("Destroying " + collision.gameObject.name + " position: " + collision.gameObject.transform.position + " rotation: " + collision.gameObject.transform.rotation);
-            destroyableTarget.DestroyTarget();
+            destroyableTarget.DestroyObjectAndTrack();
         }
 
         if (collision.gameObject.TryGetComponent<lb_Bird>(out var bird))
         {
             Debug.Log("Destroying " + collision.gameObject.name + " position: " + collision.gameObject.transform.position + " rotation: " + collision.gameObject.transform.rotation);
             bird.KillBird();
+        }
+
+        if (collision.gameObject.TryGetComponent<Duck>(out var duck))
+        {
+            Debug.Log("Destroying " + collision.gameObject.name + " position: " + collision.gameObject.transform.position + " rotation: " + collision.gameObject.transform.rotation);
+            duck.DestroyObjectAndTrack();
         }
     }
 }
