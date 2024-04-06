@@ -11,14 +11,15 @@ TagManager:
   - lb_perchTarget
   - lb_groundTarget
   - Weapon
+  - BulletHole
   layers:
   - Default
   - TransparentFX
   - Ignore Raycast
-  - 
+  - FlyingPlane
   - Water
   - UI
-  - 
+  - Projectiles
   - 
   - 
   - 
